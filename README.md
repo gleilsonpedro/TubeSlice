@@ -49,8 +49,15 @@ de dados do usuário, evitando problemas de permissão em executáveis instalado
 
 O workflow [`build.yml`](.github/workflows/build.yml) gera artefatos para
 Windows, Ubuntu e macOS quando uma tag no formato `v*` é publicada. O executável
-não inclui FFmpeg: distribua-o junto do pacote ou instale-o separadamente e
-confira as licenças aplicáveis do FFmpeg e das dependências.
+precisa do FFmpeg. O pacote Windows gerado neste ambiente já inclui o binário
+`ffmpeg.exe` dentro da pasta `_internal`. Para distribuição pública, confira as
+licenças aplicáveis do FFmpeg e das dependências.
+
+### Pacote Windows atual
+
+O arquivo `TubeSlice-Windows-x64.zip` contém o executável Windows 64-bit, suas
+dependências, FFmpeg, este README e a licença. Extraia o ZIP inteiro e execute
+`TubeSlice.exe`; não mova o executável para fora da pasta.
 
 Para gerar localmente:
 
