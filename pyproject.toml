@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tubeslice"
+version = "1.0.0"
+description = "Baixe mídia do YouTube e divida shows em faixas automaticamente."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+  "customtkinter>=5.2,<7",
+  "mutagen>=1.47,<2",
+  "pydub>=0.25,<1",
+  "requests>=2.31,<3",
+  "youtube-transcript-api>=1.0,<2",
+  "yt-dlp>=2025.1,<2027",
+]
+
+[project.scripts]
+tubeslice = "app_4:main"
+
+[tool.setuptools]
+py-modules = ["app_4"]

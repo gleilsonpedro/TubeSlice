@@ -2,7 +2,10 @@ import os
 import re
 import gc
 import json
+import shutil
+import sys
 import threading
+import webbrowser
 from datetime import datetime
 import tkinter as tk
 from tkinter import filedialog, messagebox
@@ -16,6 +19,32 @@ from mutagen.id3 import ID3, APIC, TIT2, TPE1, error
 
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
+
+
+def obter_pasta_dados():
+    """Retorna uma pasta gravável para preferências e histórico do aplicativo."""
+    if os.name == "nt":
+        base = os.environ.get("APPDATA") or os.path.expanduser("~")
+    elif sys.platform == "darwin":
+        base = os.path.join(os.path.expanduser("~"), "Library", "Application Support")
+    else:
+        base = os.environ.get("XDG_DATA_HOME") or os.path.join(os.path.expanduser("~"), ".local", "share")
+    pasta = os.path.join(base, "TubeSlice")
+    os.makedirs(pasta, exist_ok=True)
+    return pasta
+
+
+def localizar_ffmpeg():
+    """Encontra FFmpeg instalado ou distribuído junto do executável."""
+    nomes = ("ffmpeg.exe", "ffmpeg") if os.name == "nt" else ("ffmpeg",)
+    locais = [shutil.which(nome) for nome in nomes]
+    pasta_aplicativo = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__))
+    locais.extend(os.path.join(pasta_aplicativo, nome) for nome in nomes)
+    for caminho in locais:
+        if caminho and os.path.isfile(caminho):
+            return caminho
+    return None
+
 
 # Ajuste fino da detecção por [Música]
 DURACAO_MIN_FAIXA = 60          
@@ -58,7 +87,10 @@ class HistoricoWindow(ctk.CTkToplevel):
 
     def abrir_txt(self):
         if os.path.exists(self.caminho_txt):
-            os.startfile(self.caminho_txt)
+            if os.name == "nt":
+                os.startfile(self.caminho_txt)
+            else:
+                webbrowser.open(f"file://{os.path.abspath(self.caminho_txt)}")
 
 
 class SelecaoPlaylistWindow(ctk.CTkToplevel):
@@ -101,12 +133,25 @@ class TubeSliceApp(ctk.CTk):
         self.geometry("780x820")
         self.resizable(False, False)
 
-        self.pasta_destino = os.path.dirname(os.path.abspath(__file__))
-        self.caminho_historico_json = os.path.join(self.pasta_destino, "historico_downloads.json")
-        self.caminho_historico_txt = os.path.join(self.pasta_destino, "historico_downloads.txt")
+        pasta_projeto = os.path.dirname(os.path.abspath(__file__))
+        self.pasta_destino = os.path.join(os.path.expanduser("~"), "Downloads")
+        if not os.path.isdir(self.pasta_destino):
+            self.pasta_destino = pasta_projeto
+        pasta_dados = obter_pasta_dados()
+        self.caminho_historico_json = os.path.join(pasta_dados, "historico_downloads.json")
+        self.caminho_historico_txt = os.path.join(pasta_dados, "historico_downloads.txt")
+        for nome in ("historico_downloads.json", "historico_downloads.txt"):
+            antigo = os.path.join(pasta_projeto, nome)
+            novo = os.path.join(pasta_dados, nome)
+            if os.path.exists(antigo) and not os.path.exists(novo):
+                try:
+                    shutil.copy2(antigo, novo)
+                except OSError:
+                    pass
 
         self.fila_downloads = []
         self.processando = False
+        self.ffmpeg = localizar_ffmpeg()
 
         self.criar_interface()
 
@@ -639,6 +684,8 @@ class TubeSliceApp(ctk.CTk):
             pass
 
     def _fatiar_show(self, item):
+        if not self.ffmpeg:
+            raise RuntimeError("FFmpeg não encontrado. Instale-o e adicione-o ao PATH.")
         url = item['url']
         video_id = item['video_id']
         info = item['info']
@@ -662,6 +709,7 @@ class TubeSliceApp(ctk.CTk):
             'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '320'}],
             'progress_hooks': [self.hook_progresso]
         }
+        ydl_opts['ffmpeg_location'] = os.path.dirname(self.ffmpeg)
         with YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
@@ -708,6 +756,8 @@ class TubeSliceApp(ctk.CTk):
             self.log("[AVISO] Sem marcações detectadas; salvo como arquivo único.")
 
     def _baixar_normal(self, item):
+        if not self.ffmpeg:
+            raise RuntimeError("FFmpeg não encontrado. Instale-o e adicione-o ao PATH.")
         url = item['url']
         titulo = item['titulo']
         fmt = item['formato']
@@ -724,6 +774,7 @@ class TubeSliceApp(ctk.CTk):
             'no_warnings': True,
             'progress_hooks': [self.hook_progresso]
         }
+        ydl_opts['ffmpeg_location'] = os.path.dirname(self.ffmpeg)
 
         if fmt == "mp3":
             ydl_opts.update({
@@ -746,6 +797,10 @@ class TubeSliceApp(ctk.CTk):
         self.log(f"[CONCLUÍDO] Arquivo salvo: {nome_limpo}.{fmt}")
 
 
-if __name__ == "__main__":
+def main():
     app = TubeSliceApp()
     app.mainloop()
+
+
+if __name__ == "__main__":
+    main()
