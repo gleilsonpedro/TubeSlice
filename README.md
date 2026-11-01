@@ -55,9 +55,11 @@ licenças aplicáveis do FFmpeg e das dependências.
 
 ### Pacote Windows atual
 
-O arquivo `TubeSlice-Windows-x64.zip` contém o executável Windows 64-bit, suas
-dependências, FFmpeg, este README e a licença. Extraia o ZIP inteiro e execute
-`TubeSlice.exe`; não mova o executável para fora da pasta.
+**[Baixar TubeSlice 1.0.0 para Windows (64-bit)](https://github.com/gleilsonpedro/TubeSlice/releases/download/v1.0.0/TubeSlice-Windows-x64.zip)**
+
+O pacote contém o executável Windows 64-bit, suas dependências, FFmpeg, este
+README e a licença. Extraia o ZIP inteiro e execute `TubeSlice.exe`; não mova o
+executável para fora da pasta.
 
 Para gerar localmente:
 

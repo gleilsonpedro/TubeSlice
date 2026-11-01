@@ -30,7 +30,7 @@ jobs:
       - name: Package Windows
         if: runner.os == 'Windows'
         shell: pwsh
-        run: Compress-Archive -Path dist/TubeSlice/* -DestinationPath TubeSlice-Windows.zip
+        run: Compress-Archive -Path dist/TubeSlice/* -DestinationPath TubeSlice-Windows-x64.zip
       - name: Package Unix
         if: runner.os != 'Windows'
         run: tar -czf TubeSlice-${{ runner.os }}.tar.gz -C dist TubeSlice
